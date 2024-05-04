@@ -1,14 +1,19 @@
 module{
     public type UserID = Text;
-    public type GigID = Text;
+    public type LaburoID = Text;
 
     public type User = {
         userID: UserID;
         name: Text;
         email: Text;
         avatar: ?Blob;
-        gigs: [GigID];
+        laburos: [LaburoID];
         score: Nat;
+    };
+
+    public type User_settings = {
+        name: ?Text;
+        email: ?Text;
     };
 
     public type VariantService = {
@@ -18,20 +23,39 @@ module{
         #Custom: {price: Float; description: Text};
     };
 
-    public type GigInit = {
+    public type Status ={
+        #Active;
+        #Suspended;
+    };
+
+    public type LaburoInit = {
         title: Text;
         description: Text;
         image: Blob;
         variantService: [VariantService];
     };
 
-    public type Gig = {
+    public type Laburo = {
         userID: UserID;
         title: Text;
         description: Text;
         image: Blob;
         variantService: [VariantService];
+        status: Status;
         score: Nat;
         reviews: [Text];
     };
+    public type Laburo_settings = {
+        title: ?Text;
+        description: ?Text;
+        image: ?Blob;
+        variantService: ?[VariantService];
+    };
+
+    public type LaburoPreview = {
+        title: Text; 
+        id: Text; 
+        image: Blob
+    };
+    
 }

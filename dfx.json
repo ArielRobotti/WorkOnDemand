@@ -6,7 +6,7 @@
     },
     "front": {
       "dependencies": [
-        "WorkOnDemand_backend"
+        "back"
       ],
       "source": [
         "src/WorkOnDemand_frontend/dist"
