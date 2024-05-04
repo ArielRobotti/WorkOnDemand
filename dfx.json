@@ -1,10 +1,10 @@
 {
   "canisters": {
-    "WorkOnDemand_backend": {
+    "back": {
       "main": "src/WorkOnDemand_backend/main.mo",
       "type": "motoko"
     },
-    "WorkOnDemand_frontend": {
+    "front": {
       "dependencies": [
         "WorkOnDemand_backend"
       ],
@@ -29,7 +29,7 @@
   "defaults": {
     "build": {
       "args": "",
-      "packtool": ""
+      "packtool": "mops sources"
     }
   },
   "output_env_file": ".env",
