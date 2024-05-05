@@ -1,13 +1,18 @@
+import List "mo:base/List";
+import Set "mo:map/Set";
+import {thash} "mo:map/Map";
+
 module{
     public type UserID = Text;
-    public type LaburoID = Text;
+    public type WorkID = Text;
 
     public type User = {
         userID: UserID;
         name: Text;
         email: Text;
         avatar: ?Blob;
-        laburos: [LaburoID];
+        works: [WorkID];
+        chats: [ChatID];
         score: Nat;
     };
 
@@ -16,7 +21,7 @@ module{
         email: ?Text;
     };
 
-    public type VariantService = {
+    public type VariantWork = {
         #Basic: {price: Float; description: Text};
         #Medium: {price: Float; description: Text};
         #Advanced: {price: Float; description: Text};
@@ -27,35 +32,53 @@ module{
         #Active;
         #Suspended;
     };
+    public type Tag = Text;
 
-    public type LaburoInit = {
+    public type WorkInit = {
         title: Text;
+        tags: [Tag];
         description: Text;
         image: Blob;
-        variantService: [VariantService];
+        variantService: [VariantWork];
     };
 
-    public type Laburo = {
+    public type Work = {
         userID: UserID;
+        owner: Principal;
         title: Text;
+        tags: [Tag];
         description: Text;
         image: Blob;
-        variantService: [VariantService];
+        variantService: [VariantWork];
         status: Status;
         score: Nat;
         reviews: [Text];
     };
-    public type Laburo_settings = {
+    public type Work_settings = {
         title: ?Text;
         description: ?Text;
         image: ?Blob;
-        variantService: ?[VariantService];
+        variantService: ?[VariantWork];
     };
 
-    public type LaburoPreview = {
+    public type WorkPreview = {
         title: Text; 
         id: Text; 
         image: Blob
+    };
+
+    public type ChatID = Text;
+
+    public type Chat = {
+        members : [Principal];
+        content : List.List<Msg>;
+    };
+
+    public type Msg = {
+        sender: Principal;
+        date: Int;
+        content: Text;
+        adjunts: [Blob];
     };
     
 }
