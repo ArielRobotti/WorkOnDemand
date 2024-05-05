@@ -1,6 +1,4 @@
 import List "mo:base/List";
-import Set "mo:map/Set";
-import {thash} "mo:map/Map";
 
 module{
     public type UserID = Text;
