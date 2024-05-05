@@ -9,6 +9,7 @@ import List "mo:base/List";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Array "mo:base/Array";
+import Debug "mo:base/Debug";
 
 import { phash; thash } "mo:map/Map";
 import Types "./types";
@@ -294,6 +295,7 @@ actor {
                     let chatsUpdate = Set.fromIter<ChatID>(user.chats.vals(), thash);
                     ignore Set.put<ChatID>(chatsUpdate, thash, _chatID);
                     let chats = Set.toArray<ChatID>(chatsUpdate);
+                    Debug.print(chats[0]);
                     ignore Map.put<Principal, User>(users, phash, member, { user with chats });
                 };
             };
@@ -347,7 +349,10 @@ actor {
                 var counter = 0;
                 while (poped.0 != null and counter < 20) {
                     switch (poped.0) {
-                        case (?msg) { lastMsg.add(msg) };
+                        case (?msg) {
+                            lastMsg.add(msg);
+                            poped := List.pop<Msg>(poped.1);
+                        };
                         case _ {};
                     };
                     counter += 1;
@@ -357,15 +362,15 @@ actor {
         };
     };
 
-    public shared ({ caller }) func sendDirectMsg(_receiver : Principal, _msg: Text, _adjunts: [Blob]) : async () {
+    public shared ({ caller }) func sendDirectMsg(_receiver : Principal, _msg : Text, _adjunts : [Blob]) : async ChatID {
         let senderUser = Map.get<Principal, User>(users, phash, caller);
         let receiverUser = Map.get<Principal, User>(users, phash, _receiver);
         switch senderUser {
-            case null { return };
+            case null { return "" };
             case (?senderUser) {
                 switch receiverUser {
-                    case null { return };
-                    case (?receiverUser) {   
+                    case null { return "" };
+                    case (?receiverUser) {
                         let chatID = if (senderUser.userID < receiverUser.userID) {
                             senderUser.userID # " " # receiverUser.userID;
                         } else {
@@ -390,12 +395,41 @@ actor {
                         };
                         ignore Map.put<ChatID, Chat>(chats, thash, chatID, startChat);
                         pushChatID([caller, _receiver], chatID);
-
+                        chatID;
                     };
                 };
 
             };
         };
     };
-};
 
+    public shared ({ caller }) func getMyChats() : async [ChatID] {
+        let user = Map.get<Principal, User>(users, phash, caller);
+        switch (user) {
+            case null { [] };
+            case (?user) {
+                user.chats;
+            };
+        };
+    };
+
+    public shared ({ caller }) func sendMsgToChat(_chatID : ChatID, _msg : Text, _adjunts : [Blob]) : async Bool {
+        assert (isUser(caller));
+        let chat = Map.get<ChatID, Chat>(chats, thash, _chatID);
+        switch chat {
+            case null { false };
+            case (?chat) {
+                assert (Array.find<Principal>(chat.members, func x = x == caller) != null);
+                let newMsg = {
+                    sender = caller;
+                    date = Time.now();
+                    content = _msg;
+                    adjunts = _adjunts;
+                };
+                let content = List.push<Msg>(newMsg, chat.content);
+                ignore Map.put<ChatID, Chat>(chats, thash,_chatID, {chat with content});
+                true;
+            };
+        };
+    };
+};
