@@ -32,6 +32,7 @@ actor {
     public type ChatID = Types.ChatID;
     public type Chat = Types.Chat;
     public type Msg = Types.Msg;
+    public type Offer = Types.Offer;
 
     ////////////////////////////// Registros de usuarios y servicios ///////////////////
 
@@ -70,6 +71,7 @@ actor {
         randStore.setRange(1000000, 9999999);
         let userID = await generateID("US"); //el parametro enviado es el prefijo del id. "US" para ids de usuarios
         let newUser = {
+            principal = caller;
             userID;
             name;
             email;
@@ -198,7 +200,13 @@ actor {
                     case null { false };
                     case (?work) {
                         if (work.userID != user.userID) { return false };
+                        // se remueve la entrada Work correspondiente al WorkID en el mapa
                         ignore Map.remove<WorkID, Work>(globalWorks, thash, _id);
+                        // se actualiza la lista de WorkIDs en el perfil del usuario
+                        let worksSet = Set.fromIter<WorkID>(user.works.vals(), thash);
+                        ignore Set.remove<WorkID>(worksSet, thash, _id);
+                        let works = Set.toArray<WorkID>(worksSet);
+                        ignore Map.put<Principal, User>(users, phash, caller, {user with works});
                         true;
                     };
                 };
@@ -267,7 +275,8 @@ actor {
         Map.get<WorkID, Work>(globalWorks, thash, _id);
     };
 
-    ////////////////////// Llamar a esta funcion al cargar galeria de servicios principal ////////////////////
+    //////////////////////////// Llamar a esta funcion al cargar galeria de servicios principal /////////////////////////y//////
+    // TODO la idea es devolver una cantidad limitada y cuando el usuario escrolee en la galeria ir pidiendo mas desde el front
 
     public func getWorksPreview() : async [WorkPreview] {
         let worksEntries = Map.entries<WorkID, Work>(globalWorks);
@@ -284,7 +293,7 @@ actor {
         Buffer.toArray<WorkPreview>(tempBuffer);
     };
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////// Chat entre usuarios //////////////////////////////////////////////
 
     func pushChatID(_chatMembers : [Principal], _chatID : Text) : () {
         for (member in _chatMembers.vals()) {
@@ -427,9 +436,21 @@ actor {
                     adjunts = _adjunts;
                 };
                 let content = List.push<Msg>(newMsg, chat.content);
-                ignore Map.put<ChatID, Chat>(chats, thash,_chatID, {chat with content});
+                ignore Map.put<ChatID, Chat>(chats, thash, _chatID, { chat with content });
                 true;
             };
         };
+    };
+
+    ///////////////////////   Encargo y entrega de servicios //////////////////////////////////////////
+
+    public shared ({caller}) func customOfferWork(_details: Offer): async  Bool{
+        let seller = Map.get<Principal, User>(users, phash, caller);
+        switch seller {
+            case null { false };
+            case (?user) {
+                assert (user)
+            }
+        }
     };
 };

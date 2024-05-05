@@ -5,6 +5,7 @@ module{
     public type WorkID = Text;
 
     public type User = {
+        principal: Principal;
         userID: UserID;
         name: Text;
         email: Text;
@@ -40,6 +41,13 @@ module{
         variantService: [VariantWork];
     };
 
+    public type Review = {
+        reviewID: Text;
+        reviewer: ?UserID;
+        date: Int;
+        content: Text
+    };
+
     public type Work = {
         userID: UserID;
         owner: Principal;
@@ -50,7 +58,7 @@ module{
         variantService: [VariantWork];
         status: Status;
         score: Nat;
-        reviews: [Text];
+        reviews: [Review];
     };
     public type Work_settings = {
         title: ?Text;
@@ -78,5 +86,37 @@ module{
         content: Text;
         adjunts: [Blob];
     };
+
+    public type Offer = {
+        buyer: User;
+        workID: WorkID;
+        description: Text;
+        deliveryDetails: Text;
+        deliveryTime: Nat;
+
+    };
+
+    public type OrderStatus = {
+        #Sended;
+        #Accepted;
+        #Rejected;
+        #StartedJob: Int; //Timestamp del inicio del trabajo
+        #Delivered;
+        #Revision: Nat;
+        #Mediation;
+        #SuccessJob;
+    };
+
+    public type Order = {
+        orderID: Text;
+        buyer: User;
+        workID: WorkID;
+        description: Text;
+        deliveryDetails: Text;
+        deliveryTime: Nat;
+        status: OrderStatus;
+        
+    }
+
     
 }
