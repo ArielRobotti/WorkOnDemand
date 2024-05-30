@@ -10,12 +10,13 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Array "mo:base/Array";
 import Debug "mo:base/Debug";
+import Utils "./utils";
 
 import { phash; thash } "mo:map/Map";
 import Types "./types";
 import Prim "mo:⛔";
 
-actor {
+shared ({caller = DEPLOYER }) actor class Master() = Master {
 
     ///////////////////// declaraciones de tipos /////////////////////////////////////
 
@@ -46,7 +47,7 @@ actor {
 
     //////////////// Generacion y registro de disponibilidad de ids ///////////////////
 
-    let idsUsed = Set.new<Text>();
+    stable let idsUsed = Set.new<Text>();
 
     func availableID(id : Text) : Bool {
         switch (Set.contains<Text>(idsUsed, thash, id)) {
@@ -206,7 +207,7 @@ actor {
                         let worksSet = Set.fromIter<WorkID>(user.works.vals(), thash);
                         ignore Set.remove<WorkID>(worksSet, thash, _id);
                         let works = Set.toArray<WorkID>(worksSet);
-                        ignore Map.put<Principal, User>(users, phash, caller, {user with works});
+                        ignore Map.put<Principal, User>(users, phash, caller, { user with works });
                         true;
                     };
                 };
@@ -352,7 +353,7 @@ actor {
         switch chat {
             case null { [] };
             case (?chat) {
-                assert (Array.find<Principal>(chat.members, func x = x == caller) != null);
+                assert (Utils.inArray<Principal>(chat.members, caller, Principal.equal));
                 let lastMsg = Buffer.fromArray<Msg>([]);
                 var poped = List.pop<Msg>(chat.content);
                 var counter = 0;
@@ -423,12 +424,12 @@ actor {
     };
 
     public shared ({ caller }) func sendMsgToChat(_chatID : ChatID, _msg : Text, _adjunts : [Blob]) : async Bool {
-        assert (isUser(caller));
+        assert (isUser(caller) or caller == Principal.fromActor(Master)); // Master para llamadas internas de notificaciones
         let chat = Map.get<ChatID, Chat>(chats, thash, _chatID);
         switch chat {
             case null { false };
             case (?chat) {
-                assert (Array.find<Principal>(chat.members, func x = x == caller) != null);
+                assert (Utils.inArray<Principal>(chat.members, caller, Principal.equal));
                 let newMsg = {
                     sender = caller;
                     date = Time.now();
@@ -444,13 +445,23 @@ actor {
 
     ///////////////////////   Encargo y entrega de servicios //////////////////////////////////////////
 
-    public shared ({caller}) func customOfferWork(_details: Offer): async  Bool{
+    public shared ({ caller }) func customOfferWork(_details : Offer) : async Bool {
         let seller = Map.get<Principal, User>(users, phash, caller);
         switch seller {
             case null { false };
             case (?user) {
-                assert (user)
-            }
-        }
+                assert (Utils.inArray<Text>(user.works, _details.workID, Text.equal)); 
+                let msgNotification = "Usted ha recibido una oferta asociada al servicio " #_details.workID # 
+                    "\nDescripcion: " # _details.description #
+                    "\nDetalles de la entrega: " # _details.deliveryDetails #
+                    "\nTiempo de entrega en dias: " # Nat.toText(_details.deliveryTime);
+                ignore sendDirectMsg(_details.buyer.principal, msgNotification, [Utils.LOGO]); 
+                true 
+            };
+        };
     };
+
+    // public shared ({caller}) func orde ): async  {
+    //     ;
+    // };
 };
